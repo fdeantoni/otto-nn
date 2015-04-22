@@ -45,7 +45,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
 
   def costFunction(X: Features, y: Labels, lambda: Double, thetas: List[Theta]): (Cost, Gradients) = {
     assert(X.rows == y.rows)
-    val (activations, zs) = computeActivations(X)
+    val (activations, zs) = computeActivations(X, thetas)
     val cost = error(activations.last, y, X.rows)
     val reg = regularization(lambda, X.rows, thetas)
     val g = gradients(activations, zs, y, X.rows, thetas, lambda)
@@ -62,7 +62,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
    * @param X the features to run through the neural network.
    * @return A tuple of activations and their outputs z
    */
-  def computeActivations(X: Features): (Seq[DenseMatrix[Double]], Seq[DenseMatrix[Double]]) = {
+  def computeActivations(X: Features, thetas: List[Theta]): (Seq[DenseMatrix[Double]], Seq[DenseMatrix[Double]]) = {
     var activations: Seq[DenseMatrix[Double]] = Seq( DenseMatrix.horzcat(DenseMatrix.ones[Double](X.rows, 1), X) )
     var zs: Seq[DenseMatrix[Double]] = Seq.empty[DenseMatrix[Double]]
     val steps = 0 to (thetas.length -1)
@@ -128,7 +128,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
   }
 
   def predict(X: Features): Labels = {
-    val (activations, _) = computeActivations(X)
+    val (activations, _) = computeActivations(X, thetas)
     activations.last
   }
 
