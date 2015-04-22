@@ -146,24 +146,10 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
       else p
     }
     import breeze.stats._
-    logger.debug(s"Probabilities:\n$total")
     val e: Double = mean(DenseVector(total:_*))
     val l: Double = total.map(log(_)).sum * (-1D/total.length)
     (e*100, l)
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 

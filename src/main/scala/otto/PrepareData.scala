@@ -9,8 +9,7 @@ class PrepareData(data: DenseMatrix[Double]) extends Logging {
 
   val X: DenseMatrix[Double] = {
     val parameters: DenseMatrix[Double] = data(::, 1 to (data.cols - 2))
-    //PrepareData.normalize(parameters)
-    normalize(parameters(::,*),1)
+    PrepareData.normalize(parameters)
   }
 
   val y: DenseMatrix[Double] = {

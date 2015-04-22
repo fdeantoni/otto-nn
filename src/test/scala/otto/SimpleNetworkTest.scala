@@ -156,7 +156,8 @@ class SimpleNetworkTest extends FunSuite with Matchers {
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
       )
-      normalize(data(::,*))
+      //normalize(data(::,*))
+      PrepareData.normalize(data)
     }
     val yt = DenseMatrix(
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
@@ -172,7 +173,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     )
     var X = Xt
     var y = yt
-    for(i <- 1 to 2) {
+    for(i <- 1 to 100) {
       X = DenseMatrix.vertcat(X, Xt)
       y = DenseMatrix.vertcat(y, yt)
     }
@@ -184,22 +185,22 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     val (error, logloss) = network.test(X, y)
     println(s"Accuracy: $error")
     println(s"Logloss: $logloss")
-
+    error should be (99.99 +- 1e-3)
   }
-
-
-
 
   test("A neural network with otto data") {
     val fileName = "src/main/resources/train_clean.csv"
     val loader = new DataLoader(fileName, 0.8, 0.2)
     val data = new PrepareData(loader.trainData)
-    val network = new SimpleNetwork(Seq(93, 100, 9))
-    network.train(data.X, data.y, 0.5, 300)
+    val network = new SimpleNetwork(Seq(93, 68, 9))
+    network.train(data.X, data.y, 1.0, 100)
+    val (error, logLoss) = network.test(data.X, data.y)
+    println(s"Train Accuracy: $error")
+    println(s"Train Logloss: $logLoss")
     val test = new PrepareData(loader.testData)
-    val (error, logloss) = network.test(test.X, test.y)
-    println(s"Accuracy: $error")
-    println(s"Logloss: $logloss")
+    val (tError, tLogloss) = network.test(test.X, test.y)
+    println(s"Test Accuracy: $tError")
+    println(s"Test Logloss: $tLogloss")
   }
 
 
