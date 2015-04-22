@@ -1,6 +1,6 @@
 package otto
 
-import breeze.linalg.DenseMatrix
+import breeze.linalg.{*, normalize, DenseMatrix}
 import breeze.numerics.cos
 import org.scalatest.{Matchers, FunSuite}
 
@@ -142,13 +142,64 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     thetas should equal (reshaped)
   }
 
+  test("A simple neural network") {
+    val Xt: DenseMatrix[Double] = {
+      val data = DenseMatrix(
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
+        (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
+      )
+      normalize(data(::,*))
+    }
+    val yt = DenseMatrix(
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
+      (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D)
+    )
+    var X = Xt
+    var y = yt
+    for(i <- 1 to 100) {
+      X = DenseMatrix.vertcat(X, Xt)
+      y = DenseMatrix.vertcat(y, yt)
+    }
+    println(s"Size of X: ${X.rows}x${X.cols}")
+    println(s"Size of y: ${y.rows}x${y.cols}")
+    val lambda = 0
+    val network = new SimpleNetwork(Seq(2, 4, 4))
+    network.train(X, y, lambda, 100)
+    val (error, logloss) = network.test(X, y)
+    println(s"Error: $error")
+    println(s"Logloss: $logloss")
 
-  test("A neural network with 2 hidden layers") {
+  }
+
+
+
+
+  test("A neural network with otto data") {
     val fileName = "src/main/resources/train_clean.csv"
     val loader = new DataLoader(fileName, 0.8, 0.2)
     val data = new PrepareData(loader.trainData)
-    val network = new SimpleNetwork(Seq(93, 36, 18, 9))
+    val network = new SimpleNetwork(Seq(93, 100, 9))
     network.train(data.X, data.y, 0.5, 300)
+    val test = new PrepareData(loader.testData)
+    val (error, logloss) = network.test(test.X, test.y)
+    println(s"Error: $error")
+    println(s"Logloss: $logloss")
   }
 
 

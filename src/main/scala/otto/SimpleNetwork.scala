@@ -43,9 +43,26 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
     }
   }
 
-
   def costFunction(X: Features, y: Labels, lambda: Double, thetas: List[Theta]): (Cost, Gradients) = {
     assert(X.rows == y.rows)
+    val (activations, zs) = computeActivations(X)
+    val cost = error(activations.last, y, X.rows)
+    val reg = regularization(lambda, X.rows, thetas)
+    val g = gradients(activations, zs, y, X.rows, thetas, lambda)
+    (cost + reg, g)
+  }
+
+  /**
+   * Computes the activations and their respective outputs (z) of each layer. We capture the outputs of
+   * each layer purely for efficiency. Note that the last activation is the actual output of the neural
+   * network so the last layer will not have a z value.
+   *
+   * The activations are calculated using a non-linear logistic function (sigmoid curve).
+   *
+   * @param X the features to run through the neural network.
+   * @return A tuple of activations and their outputs z
+   */
+  def computeActivations(X: Features): (Seq[DenseMatrix[Double]], Seq[DenseMatrix[Double]]) = {
     var activations: Seq[DenseMatrix[Double]] = Seq( DenseMatrix.horzcat(DenseMatrix.ones[Double](X.rows, 1), X) )
     var zs: Seq[DenseMatrix[Double]] = Seq.empty[DenseMatrix[Double]]
     val steps = 0 to (thetas.length -1)
@@ -57,10 +74,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
         if(i == steps.last) a else DenseMatrix.horzcat(DenseMatrix.ones[Double](z.rows, 1), a) // add bias unit
       }
     }
-    val cost = error(activations.last, y, X.rows)
-    val reg = regularization(lambda, X.rows, thetas)
-    val g = gradients(zs, activations, y, X.rows, thetas, lambda)
-    (cost + reg, g)
+    activations -> zs
   }
 
   def error(h: DenseMatrix[Double], actual: DenseMatrix[Double], m: Double): Cost = {
@@ -74,7 +88,18 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
     thetasSquared.sum * lambda / (2 * m)
   }
 
-  def gradients(zs: Seq[DenseMatrix[Double]], activations: Seq[DenseMatrix[Double]], y: Labels, m: Double, thetas: List[Theta], lambda: Double): Gradients = {
+  /**
+   * The gradients are calculated using the derivative of the non-linear logistic activation function (sigmoid(z) :* (1.0:- sigmoid(z)))
+   *
+   * @param activations a sequence of activation matrices
+   * @param zs a sequence of layer outputs (z)
+   * @param y the desired output (actuals)
+   * @param m the size of the feature set
+   * @param thetas a sequence of thetas for each layer
+   * @param lambda the regularization parameter
+   * @return
+   */
+  def gradients(activations: Seq[DenseMatrix[Double]], zs: Seq[DenseMatrix[Double]], y: Labels, m: Double, thetas: List[Theta], lambda: Double): Gradients = {
     var deltas: Seq[DenseMatrix[Double]] = List(activations.last - y)
     val idx = (1 to (activations.length - 2)).reverse  // back-propagate excluding input and output activations
     assert(idx.length+1 == thetas.length)
@@ -101,6 +126,38 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
     }
     DenseVector.vertcat(gradientsRegularized.map(_.toDenseVector):_*)
   }
+
+  def predict(X: Features): Labels = {
+    val (activations, _) = computeActivations(X)
+    activations.last
+  }
+
+  def test(X: Features, y: Labels): (Double, Double) = {
+    val prediction = predict(X) 
+    val list = Seq.tabulate(prediction.rows){ i => prediction(i,::).inner -> y(i,::).inner }
+    val total = for(sample <- list) yield {
+      val p = sum(sample._1 :* sample._2)
+      if (p >= (1 - 1e-15))
+        1 - 1e-15
+      else if (p < 1e-15)
+        1e-15
+      else p
+    }
+    import breeze.stats._
+    val e: Double = mean(DenseVector(total:_*))
+    val l: Double = total.map(log(_)).sum * (-1/prediction.rows)
+    (e*100, l)
+  }
+
+
+
+
+
+
+
+
+
+
 
 
 

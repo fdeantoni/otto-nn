@@ -9,7 +9,8 @@ class PrepareData(data: DenseMatrix[Double]) extends Logging {
 
   val X: DenseMatrix[Double] = {
     val parameters: DenseMatrix[Double] = data(::, 1 to (data.cols - 2))
-    normalize(parameters)
+    //PrepareData.normalize(parameters)
+    normalize(parameters(::,*),1)
   }
 
   val y: DenseMatrix[Double] = {
@@ -22,7 +23,11 @@ class PrepareData(data: DenseMatrix[Double]) extends Logging {
     DenseMatrix(vecs:_*)
   }
 
-  private def normalize(data: DenseMatrix[Double]) = {
+}
+
+object PrepareData {
+
+  def normalize(data: DenseMatrix[Double]) = {
     val mv: DenseMatrix[MeanAndVariance] = meanAndVariance(data(::,*))
     val cols = for(i <- 0 to mv.cols - 1) yield {
       val mvi = mv(0,i)
@@ -30,7 +35,5 @@ class PrepareData(data: DenseMatrix[Double]) extends Logging {
     }
     DenseMatrix(cols.map(_.data):_*).t
   }
-
-
 
 }
