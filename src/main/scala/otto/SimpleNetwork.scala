@@ -20,6 +20,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
   }
 
   def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): Unit = {
+    logger.debug(s"Thetas hash start: ${thetas.hashCode()}")
     val f = new DiffFunction[DenseVector[Double]] {
       def calculate(theta: DenseVector[Double]): (Double, DenseVector[Double]) = {
         val rolled = reshapeThetas(theta, thetas)
@@ -30,6 +31,7 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
     val unrolledThetas = flattenThetas(thetas)
     val result = lbfgs.minimize(f, unrolledThetas)
     thetas = reshapeThetas(result, thetas)
+    logger.debug(s"Thetas hash end: ${thetas.hashCode()}")
   }
 
   def flattenThetas(thetas: List[Theta]): DenseVector[Double] = {
@@ -144,8 +146,9 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
       else p
     }
     import breeze.stats._
+    logger.debug(s"Probabilities:\n$total")
     val e: Double = mean(DenseVector(total:_*))
-    val l: Double = total.map(log(_)).sum * (-1/prediction.rows)
+    val l: Double = total.map(log(_)).sum * (-1D/total.length)
     (e*100, l)
   }
 

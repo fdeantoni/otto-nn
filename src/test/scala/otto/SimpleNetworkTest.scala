@@ -172,7 +172,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     )
     var X = Xt
     var y = yt
-    for(i <- 1 to 100) {
+    for(i <- 1 to 2) {
       X = DenseMatrix.vertcat(X, Xt)
       y = DenseMatrix.vertcat(y, yt)
     }
@@ -182,7 +182,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     val network = new SimpleNetwork(Seq(2, 4, 4))
     network.train(X, y, lambda, 100)
     val (error, logloss) = network.test(X, y)
-    println(s"Error: $error")
+    println(s"Accuracy: $error")
     println(s"Logloss: $logloss")
 
   }
@@ -198,7 +198,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     network.train(data.X, data.y, 0.5, 300)
     val test = new PrepareData(loader.testData)
     val (error, logloss) = network.test(test.X, test.y)
-    println(s"Error: $error")
+    println(s"Accuracy: $error")
     println(s"Logloss: $logloss")
   }
 
