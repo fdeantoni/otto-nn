@@ -5,133 +5,21 @@ import breeze.numerics.{log, sigmoid}
 import breeze.optimize._
 import grizzled.slf4j.Logging
 
-class SimpleNetwork(layers: Seq[Int]) extends Logging {
-
-  val layerIndex = 0 to (layers.length - 1)
-
-  var thetas: List[Theta] = layers.sliding(2).map { layer =>
-    initializeTheta(layer(0), layer(1))
-  }.toList
-
-  private def initializeTheta(input: Int, output: Int): Theta = {
-    val epsilon = 0.12
-    val random: DenseMatrix[Double] = DenseMatrix.rand[Double](output, input + 1) :* (2 * epsilon)
-    random - epsilon
-  }
+class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
   def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): Unit = {
-    logger.debug(s"Thetas hash start: ${thetas.hashCode()}")
     val f = new DiffFunction[DenseVector[Double]] {
-      def calculate(theta: DenseVector[Double]): (Double, DenseVector[Double]) = {
-        val rolled = reshapeThetas(theta, thetas)
-        costFunction(X, y, lambda, rolled)
+      def calculate(vector: DenseVector[Double]): (Double, DenseVector[Double]) = {
+        thetas.costFunction(X, y, lambda)
       }
     }
     val lbfgs = new LBFGS[DenseVector[Double]](maxIter = maxIterations)
-    val unrolledThetas = flattenThetas(thetas)
-    val result = lbfgs.minimize(f, unrolledThetas)
-    thetas = reshapeThetas(result, thetas)
-    logger.debug(s"Thetas hash end: ${thetas.hashCode()}")
-  }
-
-  def flattenThetas(thetas: List[Theta]): DenseVector[Double] = {
-    DenseVector.vertcat(thetas.map(_.toDenseVector).toSeq:_*)
-  }
-
-  def reshapeThetas(vector: DenseVector[Double], originalThetas: List[Theta]): List[Theta] = {
-    List.tabulate(thetas.length){ i =>
-      val offset = if(i > 0) originalThetas(i-1).rows * originalThetas(i-1).cols else 0
-      new DenseMatrix(originalThetas(i).rows, originalThetas(i).cols, vector.data, offset)
-    }
-  }
-
-  def costFunction(X: Features, y: Labels, lambda: Double, thetas: List[Theta]): (Cost, Gradients) = {
-    assert(X.rows == y.rows)
-    val (activations, zs) = computeActivations(X, thetas)
-    val cost = error(activations.last, y, X.rows)
-    val reg = regularization(lambda, X.rows, thetas)
-    val g = gradients(activations, zs, y, X.rows, thetas, lambda)
-    (cost + reg, g)
-  }
-
-  /**
-   * Computes the activations and their respective outputs (z) of each layer. We capture the outputs of
-   * each layer purely for efficiency. Note that the last activation is the actual output of the neural
-   * network so the last layer will not have a z value.
-   *
-   * The activations are calculated using a non-linear logistic function (sigmoid curve).
-   *
-   * @param X the features to run through the neural network.
-   * @return A tuple of activations and their outputs z
-   */
-  def computeActivations(X: Features, thetas: List[Theta]): (Seq[DenseMatrix[Double]], Seq[DenseMatrix[Double]]) = {
-    var activations: Seq[DenseMatrix[Double]] = Seq( DenseMatrix.horzcat(DenseMatrix.ones[Double](X.rows, 1), X) )
-    var zs: Seq[DenseMatrix[Double]] = Seq.empty[DenseMatrix[Double]]
-    val steps = 0 to (thetas.length -1)
-    for(i <- steps) {
-      val z: DenseMatrix[Double] = activations.last * thetas(i).t
-      zs :+= z
-      val a: DenseMatrix[Double] = sigmoid(z)
-      activations :+= {
-        if(i == steps.last) a else DenseMatrix.horzcat(DenseMatrix.ones[Double](z.rows, 1), a) // add bias unit
-      }
-    }
-    activations -> zs
-  }
-
-  def error(h: DenseMatrix[Double], actual: DenseMatrix[Double], m: Double): Cost = {
-    sum( (-actual :* log(h)) :- ((1.0 :- actual) :* log(1.0 :- h)) ) / m
-  }
-
-  def regularization(lambda: Double, m: Double, thetas: List[Theta]): Double = {
-    val thetasSquared: Seq[Double] = thetas.map { theta =>
-      sum( theta(::,1 to theta.cols - 1):^2D )
-    }
-    thetasSquared.sum * lambda / (2 * m)
-  }
-
-  /**
-   * The gradients are calculated using the derivative of the non-linear logistic activation function (sigmoid(z) :* (1.0:- sigmoid(z)))
-   *
-   * @param activations a sequence of activation matrices
-   * @param zs a sequence of layer outputs (z)
-   * @param y the desired output (actuals)
-   * @param m the size of the feature set
-   * @param thetas a sequence of thetas for each layer
-   * @param lambda the regularization parameter
-   * @return
-   */
-  def gradients(activations: Seq[DenseMatrix[Double]], zs: Seq[DenseMatrix[Double]], y: Labels, m: Double, thetas: List[Theta], lambda: Double): Gradients = {
-    var deltas: Seq[DenseMatrix[Double]] = List(activations.last - y)
-    val idx = (1 to (activations.length - 2)).reverse  // back-propagate excluding input and output activations
-    assert(idx.length+1 == thetas.length)
-    for(i <- idx) {
-      val theta = thetas(i)(::,1 to thetas(i).cols-1) // remove bias unit
-      val z = zs(i-1)
-      val r: DenseMatrix[Double] = deltas.last * theta
-      val s: DenseMatrix[Double] = sigmoid(z) :* (1.0:- sigmoid(z))
-      deltas :+= r :* s
-    }
-    val gradients: Seq[DenseMatrix[Double]] = deltas.reverse.zip(activations.dropRight(1)).map { item =>
-      val delta: DenseMatrix[Double] = item._1
-      val activation: DenseMatrix[Double] = item._2
-      val result: DenseMatrix[Double] = delta.t * activation
-      result :/ m
-    }
-    val gradientsRegularized: Seq[DenseMatrix[Double]] = gradients.zip(thetas).map { item =>
-      val unregularized: DenseMatrix[Double] = item._1
-      val theta: DenseMatrix[Double] = item._2
-      val reg: DenseMatrix[Double] = theta :* (lambda/m)
-      val regularized = unregularized + reg
-      regularized(::,0) := unregularized(::,0)
-      regularized
-    }
-    DenseVector.vertcat(gradientsRegularized.map(_.toDenseVector):_*)
+    val result = lbfgs.minimize(f, thetas.flatten)
+    new SimpleNetwork(thetas.update(result))
   }
 
   def predict(X: Features): Labels = {
-    val (activations, _) = computeActivations(X, thetas)
-    activations.last
+    thetas.activations(X).a3
   }
 
   def test(X: Features, y: Labels): (Double, Double) = {
@@ -149,6 +37,97 @@ class SimpleNetwork(layers: Seq[Int]) extends Logging {
     val e: Double = mean(DenseVector(total:_*))
     val l: Double = total.map(log(_)).sum * (-1D/total.length)
     (e*100, l)
+  }
+
+}
+
+object SimpleNetwork extends Logging {
+
+  case class Activations(a1: DenseMatrix[Double], a2: DenseMatrix[Double], a3: DenseMatrix[Double])
+
+  case class Thetas(w1: DenseMatrix[Double], w2: DenseMatrix[Double]) {
+    def flatten = {
+      DenseVector.vertcat(Seq(w1.toDenseVector, w2.toDenseVector):_*)
+    }
+    def update(vector: DenseVector[Double]) = {
+      val nw1 = new DenseMatrix(w1.rows, w1.cols, vector.data, 0)
+      val nw2 = new DenseMatrix(w2.rows, w2.cols, vector.data, w1.rows * w1.cols)
+      new Thetas(nw1, nw2)
+    }
+    def activations(X: Features) = {
+      val a1 = bias(X)
+      val a2 = bias(activate(a1, w1))
+      val a3 = activate(a2, w2)
+      Activations(a1, a2, a3)
+    }
+    private def bias(input: DenseMatrix[Double]) = {
+      DenseMatrix.horzcat(DenseMatrix.ones[Double](input.rows, 1), input)
+    }
+    private def activate(input: DenseMatrix[Double], weights: DenseMatrix[Double]): DenseMatrix[Double] = {
+      sigmoid(input * weights.t)
+    }
+
+    def costFunction(X: Features, y: Labels, lambda: Double): (Double, DenseVector[Double]) = {
+      val a = activations(X)
+      val cost = mse(a.a3, y, X.rows)
+      val reg = regularization(lambda, X.rows)
+      val grads = gradients(a, y, lambda)
+      (cost + reg, grads)
+    }
+
+    private def mse(h: DenseMatrix[Double], actual: DenseMatrix[Double], m: Double): Double = {
+      logger.debug(s"Hypothesis:\n$h")
+      logger.debug(s"Labels:\n$actual")
+      sum( (-actual :* log(h)) :- ((1.0 :- actual) :* log(1.0 :- h)) ) / m
+    }
+
+    private def regularization(lambda: Double, m: Double): Double = {
+      val w1reg: Double = sum(w1(::,1 to w1.cols - 1):^2D)
+      val w2reg: Double = sum(w2(::,1 to w2.cols - 1):^2D)
+      (w1reg + w2reg) * lambda / (2 * m)
+    }
+
+    private def gradients(activations: Activations, y: Labels, lambda: Double): DenseVector[Double] = {
+      val m: Double = activations.a1.cols
+      val d3: DenseMatrix[Double] = sigmoidGradient(activations.a3) :* (activations.a3 - y)
+      val d2: DenseMatrix[Double] = sigmoidGradient(unbiased(activations.a2)) :* (d3 * unbiased(w2))
+      val w2Gradient: DenseMatrix[Double] = (1/m) :* (d3.t * activations.a2)
+      val w1Gradient: DenseMatrix[Double] = (1/m) :* (d2.t * activations.a1)
+      val w2Reg = (lambda/m) :* w2
+      val w1Reg = (lambda/m) :* w1
+      val w1GradientReg = w1Gradient + w1Reg
+      w1GradientReg(::,0) := w1Gradient(::,0)
+      val w2GradientReg = w2Gradient + w2Reg
+      w2GradientReg(::,0) := w2Gradient(::,0)
+      val list = Seq(w2GradientReg.toDenseVector, w1GradientReg.toDenseVector)
+      DenseVector.vertcat(list:_*)
+    }
+
+    private def sigmoidGradient(activation: DenseMatrix[Double]) = {
+      activation :* (1.0:-activation)
+    }
+
+    private def unbiased(activation: DenseMatrix[Double]) = {
+      logger.debug(s"Unbiasing:\n$activation")
+      activation(::, 1 to activation.cols - 1)
+    }
+
+    override def toString = {
+      s"w1:\n$w1\nw2:\n$w2"
+    }
+
+  }
+
+  def apply(input: Int, hidden: Int, output: Int) = {
+    val w1 = initializeTheta(input, hidden)
+    val w2 = initializeTheta(hidden, output)
+    new SimpleNetwork(Thetas(w1, w2))
+  }
+
+  private def initializeTheta(input: Int, output: Int): Theta = {
+    val epsilon = 0.12
+    val random: DenseMatrix[Double] = DenseMatrix.rand[Double](output, input + 1) :* (2 * epsilon)
+    random - epsilon
   }
 
 }
