@@ -28,7 +28,6 @@ object Runner extends Logging {
     println(s"Test logloss: ${test.logloss}")
     val errors = result.output.filter(sample => sample.probability < 0.005)
     println(s"Results with < 0.5% probability: ${errors.length}")
-    println(errors.mkString("\n"))
     test
   }
 

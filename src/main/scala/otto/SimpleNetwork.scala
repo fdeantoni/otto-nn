@@ -1,7 +1,7 @@
 package otto
 
 import breeze.linalg._
-import breeze.numerics.{log, sigmoid}
+import breeze.numerics._
 import breeze.optimize._
 import grizzled.slf4j.Logging
 
