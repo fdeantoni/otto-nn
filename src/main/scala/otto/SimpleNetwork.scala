@@ -6,7 +6,7 @@ import breeze.optimize._
 import grizzled.slf4j.Logging
 
 class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
-
+  
   def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): SimpleNetwork = {
     val f = new DiffFunction[DenseVector[Double]] {
       def calculate(vector: DenseVector[Double]): (Double, DenseVector[Double]) = {
@@ -23,26 +23,35 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
     thetas.activations(X).a3
   }
 
-  def test(X: Features, y: Labels): (Double, Double) = {
-    val prediction = predict(X) 
-    val list = Seq.tabulate(prediction.rows){ i => prediction(i,::).inner -> y(i,::).inner }
-    val total = for(sample <- list) yield {
-      val p = sum(sample._1 :* sample._2)
-      if (p >= (1 - 1e-15))
+  def test(ids: Ids, X: Features, y: Labels): SimpleNetwork.TestResults = {
+    val predictions = predict(X)
+    val list = Seq.tabulate(predictions.rows){ i =>
+      val id = ids(i)
+      val features = X(i,::).inner
+      val label = y(i,::).inner
+      val prediction = predictions(i, ::).inner
+      val probability = sum(label :* prediction)
+      SimpleNetwork.TestOutput(id, features, label, prediction, probability)
+    }
+    val probabilities = for(sample <- list) yield {
+      if (sample.probability >= (1 - 1e-15))
         1 - 1e-15
-      else if (p < 1e-15)
+      else if (sample.probability < 1e-15)
         1e-15
-      else p
+      else sample.probability
     }
     import breeze.stats._
-    val e: Double = mean(DenseVector(total:_*))
-    val l: Double = total.map(log(_)).sum * (-1D/total.length)
-    (e*100, l)
+    val accuracy: Double = mean(DenseVector(probabilities:_*))
+    val logloss: Double = probabilities.map(log(_)).sum * (-1D/probabilities.length)
+    SimpleNetwork.TestResults(accuracy, logloss, list)
   }
 
 }
 
 object SimpleNetwork extends Logging {
+  
+  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], prediction: DenseVector[Double], probability: Double)
+  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput])
 
   case class Activations(a1: DenseMatrix[Double], a2: DenseMatrix[Double], a3: DenseMatrix[Double])
 
@@ -122,11 +131,13 @@ object SimpleNetwork extends Logging {
     new SimpleNetwork(Thetas(w1, w2))
   }
 
-  private def initializeTheta(input: Int, output: Int): Theta = {
+  private def initializeTheta(input: Int, output: Int): DenseMatrix[Double] = {
     val epsilon = 0.12
     val random: DenseMatrix[Double] = DenseMatrix.rand[Double](output, input + 1) :* (2 * epsilon)
     random - epsilon
   }
+  
+  
 
 }
 

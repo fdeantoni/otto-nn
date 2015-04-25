@@ -118,7 +118,6 @@ class SimpleNetworkTest extends FunSuite with Matchers {
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
       )
-      //normalize(data(::,*))
       PrepareData.normalize(data)
     }
     val yt = DenseMatrix(
@@ -139,14 +138,19 @@ class SimpleNetworkTest extends FunSuite with Matchers {
       X = DenseMatrix.vertcat(X, Xt)
       y = DenseMatrix.vertcat(y, yt)
     }
+    val ids = DenseVector( Seq.tabulate(X.rows){i => i.toDouble}:_* )
+    println(s"Size of ids: ${ids.length}")
     println(s"Size of X: ${X.rows}x${X.cols}")
     println(s"Size of y: ${y.rows}x${y.cols}")
     val lambda = 0
     val trained = SimpleNetwork(2, 4, 4).train(X, y, lambda, 50)
-    val (error, logloss) = trained.test(X, y)
-    println(s"Accuracy: $error")
-    println(s"Logloss: $logloss")
-    error should be (99.999 +- 1e-3)
+    val result = trained.test(ids, X, y)
+    println(s"Accuracy: ${result.accuracy}")
+    println(s"Logloss: ${result.logloss}")
+    result.accuracy should (be > 0.99)
+    val errors = result.output.filter(sample => sample.probability < 0.8)
+    println(s"Results with < 99% probability: ${errors.length}")
+    println(errors.mkString("\n"))
   }
 
   test("A neural network with otto data") {
@@ -154,13 +158,16 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     val loader = new DataLoader(fileName, 0.8, 0.2)
     val data = new PrepareData(loader.trainData)
     val network = SimpleNetwork(93, 68, 9).train(data.X, data.y, 1.0, 100)
-    val (error, logLoss) = network.test(data.X, data.y)
-    println(s"Train Accuracy: $error")
-    println(s"Train Logloss: $logLoss")
-    val test = new PrepareData(loader.testData)
-    val (tError, tLogloss) = network.test(test.X, test.y)
-    println(s"Test Accuracy: $tError")
-    println(s"Test Logloss: $tLogloss")
+    val result = network.test(data.ids, data.X, data.y)
+    println(s"Accuracy: ${result.accuracy}")
+    println(s"Logloss: ${result.logloss}")
+    val testData = new PrepareData(loader.testData)
+    val test = network.test(testData.ids, testData.X, testData.y)
+    println(s"Test Accuracy: ${test.accuracy}")
+    println(s"Test logloss: ${test.logloss}")
+    val errors = result.output.filter(sample => sample.probability < 0.1)
+    println(s"Results with < 10% probability: ${errors.length} / ${testData.X.rows}")
+    //println(errors.mkString("\n"))
   }
 
 

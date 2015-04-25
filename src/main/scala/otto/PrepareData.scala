@@ -7,12 +7,14 @@ import grizzled.slf4j.Logging
 
 class PrepareData(data: DenseMatrix[Double]) extends Logging {
 
-  val X: DenseMatrix[Double] = {
+  val ids: Ids = data(::, 1)
+
+  val X: Features = {
     val parameters: DenseMatrix[Double] = data(::, 1 to (data.cols - 2))
     PrepareData.normalize(parameters)
   }
 
-  val y: DenseMatrix[Double] = {
+  val y: Labels = {
     val labels: DenseMatrix[Double] = DenseMatrix.eye[Double](9)
     val idx = data(::, data.cols - 1)
     val vecs = for(i <- 0 to idx.length - 1) yield {
