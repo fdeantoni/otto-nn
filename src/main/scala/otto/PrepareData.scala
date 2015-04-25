@@ -5,26 +5,18 @@ import breeze.numerics._
 import breeze.stats._
 import grizzled.slf4j.Logging
 
-class PrepareData(data: DenseMatrix[Double], prune: Seq[Double] = Seq.empty) extends Logging {
+class PrepareData(data: DenseMatrix[Double]) extends Logging {
 
-  private var pruned: DenseMatrix[Double] = data
-
-  for(id <- prune) {
-    val selector: DenseVector[Int] = (pruned(::,0) :== id).map(item => if(item) 1 else 0)
-    val row: Int = argmax(selector)
-    pruned = pruned.delete(row, Axis._0)
-  }
-
-  val ids: Ids = pruned(::, 0)
+  val ids: Ids = data(::, 0)
 
   val X: Features = {
-    val parameters: DenseMatrix[Double] = pruned(::, 1 to (data.cols - 2))
+    val parameters: DenseMatrix[Double] = data(::, 1 to (data.cols - 2))
     PrepareData.normalize(parameters)
   }
 
   val y: Labels = {
     val labels: DenseMatrix[Double] = DenseMatrix.eye[Double](9)
-    val idx = pruned(::, data.cols - 1)
+    val idx = data(::, data.cols - 1)
     val vecs = for(i <- 0 to idx.length - 1) yield {
       val classifier = idx(i).toInt - 1
       labels(classifier,::).inner.toScalaVector()

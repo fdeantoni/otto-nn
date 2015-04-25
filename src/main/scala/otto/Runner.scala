@@ -7,13 +7,14 @@ import grizzled.slf4j.Logging
 object Runner extends Logging {
 
   val file = "src/main/resources/train_clean.csv"
-  val loader = new DataLoader(file, 0.8, 0.2)
+
 
   def main (args: Array[String] = Array.empty[String]): Unit = {
     test(100, 5)
   }
 
-  def test(iterations: Int, lambda: Double): SimpleNetwork.TestResults = {
+  def test(iterations: Int, lambda: Double, prune: Seq[Double] = Seq.empty): SimpleNetwork.TestResults = {
+    val loader = new DataLoader(fileName = file, train = 0.8, test = 0.2, prune = prune)
     val trainData = new PrepareData(loader.trainData)
     val network = SimpleNetwork(93, 100, 9).train(trainData.X, trainData.y, lambda, iterations)
     val result = network.test(trainData.ids, trainData.X, trainData.y)

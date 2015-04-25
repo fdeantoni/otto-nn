@@ -28,4 +28,16 @@ class DataLoaderTest extends FunSuite with Matchers {
     loader.cvData.rows should equal (5)
   }
 
+  test("Prune some samples") {
+    val fileName = "src/test/resources/train_sample_small.csv"
+    val ids = Seq(1D, 2D, 3D, 4D, 5D)
+    println("ids for pruning: " + ids)
+    val loader = new DataLoader(fileName, 0.8, 0.2, ids)
+    println("training data loaded: \n" + loader.trainData)
+    val data = loader.trainData(::,0).toScalaVector()
+    for(id <- ids) {
+      data should not contain id
+    }
+  }
+
 }
