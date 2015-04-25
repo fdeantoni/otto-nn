@@ -88,13 +88,13 @@ object SimpleNetwork extends Logging {
     }
 
     private def gradients(activations: Activations, y: Labels, lambda: Double): DenseVector[Double] = {
-      val m: Double = activations.a1.cols
+      val m: Double = activations.a1.rows
       val d3: DenseMatrix[Double] = activations.a3 - y
       val d2: DenseMatrix[Double] = sigmoidGradient(unbiased(activations.a2)) :* (d3 * unbiased(w2))
       val w2Gradient: DenseMatrix[Double] = (1/m) :* (d3.t * activations.a2)
       val w1Gradient: DenseMatrix[Double] = (1/m) :* (d2.t * activations.a1)
-      val w2Reg = (lambda/m) :* w2
       val w1Reg = (lambda/m) :* w1
+      val w2Reg = (lambda/m) :* w2
       val w1GradientReg = w1Gradient + w1Reg
       w1GradientReg(::,0) := w1Gradient(::,0)
       val w2GradientReg = w2Gradient + w2Reg
