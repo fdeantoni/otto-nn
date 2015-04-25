@@ -104,27 +104,6 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     result._2(17) should be (2.1242 +- 1e-5)
   }
 
-//  test("Reshaping and flattening of Thetas") {
-//    val network = new SimpleNetwork(Seq(2, 2, 4))
-//    val thetas = List(
-//      DenseMatrix(
-//        (0.1, 0.3, 0.5),
-//        (0.2, 0.4, 0.6)
-//      ),
-//      DenseMatrix(
-//        (0.7, 1.1, 1.5),
-//        (0.8, 1.2, 1.6),
-//        (0.9, 1.3, 1.7),
-//        (1.0, 1.4, 1.8)
-//      )
-//    )
-//    val flattened = network.flattenThetas(thetas)
-//    println(s"Flattened\n$flattened")
-//    val reshaped = network.reshapeThetas(flattened, thetas)
-//    println(s"Reshaped\n$reshaped")
-//    thetas should equal (reshaped)
-//  }
-//
   test("A simple neural network") {
     val Xt: DenseMatrix[Double] = {
       val data = DenseMatrix(
@@ -138,7 +117,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
-      ).t
+      )
       //normalize(data(::,*))
       PrepareData.normalize(data)
     }
@@ -153,38 +132,36 @@ class SimpleNetworkTest extends FunSuite with Matchers {
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D)
-    ).t
+    )
     var X = Xt
     var y = yt
     for(i <- 1 to 100) {
-      X = DenseMatrix.horzcat(X, Xt)
-      y = DenseMatrix.horzcat(y, yt)
+      X = DenseMatrix.vertcat(X, Xt)
+      y = DenseMatrix.vertcat(y, yt)
     }
     println(s"Size of X: ${X.rows}x${X.cols}")
     println(s"Size of y: ${y.rows}x${y.cols}")
     val lambda = 0
-    val network = SimpleNetwork(2, 4, 4)
-    network.train(X, y, lambda, 100)
-    val (error, logloss) = network.test(X, y)
+    val trained = SimpleNetwork(2, 4, 4).train(X, y, lambda, 50)
+    val (error, logloss) = trained.test(X, y)
     println(s"Accuracy: $error")
     println(s"Logloss: $logloss")
-    error should be (99.99 +- 1e-3)
+    error should be (99.999 +- 1e-3)
   }
-//
-//  test("A neural network with otto data") {
-//    val fileName = "src/main/resources/train_clean.csv"
-//    val loader = new DataLoader(fileName, 0.8, 0.2)
-//    val data = new PrepareData(loader.trainData)
-//    val network = new SimpleNetwork(Seq(93, 68, 9))
-//    network.train(data.X, data.y, 1.0, 100)
-//    val (error, logLoss) = network.test(data.X, data.y)
-//    println(s"Train Accuracy: $error")
-//    println(s"Train Logloss: $logLoss")
-//    val test = new PrepareData(loader.testData)
-//    val (tError, tLogloss) = network.test(test.X, test.y)
-//    println(s"Test Accuracy: $tError")
-//    println(s"Test Logloss: $tLogloss")
-//  }
+
+  test("A neural network with otto data") {
+    val fileName = "src/main/resources/train_clean.csv"
+    val loader = new DataLoader(fileName, 0.8, 0.2)
+    val data = new PrepareData(loader.trainData)
+    val network = SimpleNetwork(93, 68, 9).train(data.X, data.y, 1.0, 100)
+    val (error, logLoss) = network.test(data.X, data.y)
+    println(s"Train Accuracy: $error")
+    println(s"Train Logloss: $logLoss")
+    val test = new PrepareData(loader.testData)
+    val (tError, tLogloss) = network.test(test.X, test.y)
+    println(s"Test Accuracy: $tError")
+    println(s"Test Logloss: $tLogloss")
+  }
 
 
 

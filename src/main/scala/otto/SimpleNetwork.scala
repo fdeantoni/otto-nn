@@ -7,10 +7,11 @@ import grizzled.slf4j.Logging
 
 class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
-  def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): Unit = {
+  def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): SimpleNetwork = {
     val f = new DiffFunction[DenseVector[Double]] {
       def calculate(vector: DenseVector[Double]): (Double, DenseVector[Double]) = {
-        thetas.costFunction(X, y, lambda)
+        val updated = thetas.update(vector)
+        updated.costFunction(X, y, lambda)
       }
     }
     val lbfgs = new LBFGS[DenseVector[Double]](maxIter = maxIterations)
@@ -76,8 +77,6 @@ object SimpleNetwork extends Logging {
     }
 
     private def mse(h: DenseMatrix[Double], actual: DenseMatrix[Double], m: Double): Double = {
-      logger.debug(s"Hypothesis:\n$h")
-      logger.debug(s"Labels:\n$actual")
       sum( (-actual :* log(h)) :- ((1.0 :- actual) :* log(1.0 :- h)) ) / m
     }
 
@@ -108,7 +107,6 @@ object SimpleNetwork extends Logging {
     }
 
     private def unbiased(activation: DenseMatrix[Double]) = {
-      logger.debug(s"Unbiasing:\n$activation")
       activation(::, 1 to activation.cols - 1)
     }
 
