@@ -6,7 +6,9 @@ import breeze.optimize._
 import grizzled.slf4j.Logging
 
 class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
-  
+
+  val layers = Seq(thetas.w1.cols, thetas.w1.rows, thetas.w2.rows)
+
   def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): SimpleNetwork = {
     val f = new DiffFunction[DenseVector[Double]] {
       def calculate(vector: DenseVector[Double]): (Double, DenseVector[Double]) = {

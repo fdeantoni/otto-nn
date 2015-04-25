@@ -165,9 +165,9 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     val test = network.test(testData.ids, testData.X, testData.y)
     println(s"Test Accuracy: ${test.accuracy}")
     println(s"Test logloss: ${test.logloss}")
-    val errors = result.output.filter(sample => sample.probability < 0.1)
-    println(s"Results with < 10% probability: ${errors.length} / ${testData.X.rows}")
-    //println(errors.mkString("\n"))
+    val errors = result.output.filter(sample => sample.probability < 0.005)
+    println(s"Results with < 0.5% probability: ${errors.length} / ${testData.X.rows}")
+    println(errors.mkString("\n"))
   }
 
 
