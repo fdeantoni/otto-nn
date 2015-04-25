@@ -7,7 +7,7 @@ import grizzled.slf4j.Logging
 
 class PrepareData(data: DenseMatrix[Double]) extends Logging {
 
-  val ids: Ids = data(::, 1)
+  val ids: Ids = data(::, 0)
 
   val X: Features = {
     val parameters: DenseMatrix[Double] = data(::, 1 to (data.cols - 2))
