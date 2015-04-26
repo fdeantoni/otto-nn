@@ -1,5 +1,7 @@
 package otto
 
+import java.io.File
+
 import breeze.linalg._
 import breeze.numerics._
 import org.scalatest.{Matchers, FunSuite}
@@ -169,6 +171,29 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     println(s"Results with < 0.5% probability: ${errors.length} / ${testData.X.rows}")
     println(errors.mkString("\n"))
   }
+
+  test("Save and load a network") {
+    val target = "target/test-network.json"
+    val w1 = DenseMatrix(
+      (0.1, 0.3, 0.5),
+      (0.2, 0.4, 0.6)
+    )
+    val w2 = DenseMatrix(
+      (0.7, 1.1, 1.5),
+      (0.8, 1.2, 1.6),
+      (0.9, 1.3, 1.7),
+      (1.0, 1.4, 1.8)
+    )
+    val thetas = SimpleNetwork.Thetas(w1, w2)
+    val network = new SimpleNetwork(thetas)
+    network.save(target)
+    val file = new File(target)
+    file.exists() should equal (true)
+    val check = SimpleNetwork.load(target)
+    check.thetas.w1 should equal (w1)
+    check.thetas.w2 should equal (w2)
+  }
+
 
 
 

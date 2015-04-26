@@ -8,6 +8,8 @@ import grizzled.slf4j.Logging
 
 class DataLoader(fileName: String, train: Double, test: Double) extends Logging {
 
+  if(train + test > 1) throw new RuntimeException("The train + test ratio cannot be more than 1!")
+
   val data = csvread(file = new File(fileName), skipLines = 1)
 
   logger.info(s"Data size: ${data.rows}x${data.cols}")

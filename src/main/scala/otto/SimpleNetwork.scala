@@ -7,7 +7,7 @@ import grizzled.slf4j.Logging
 
 class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
-  val layers = Seq(thetas.w1.cols, thetas.w1.rows, thetas.w2.rows)
+  val layers = Seq(thetas.w1.cols - 1, thetas.w1.rows, thetas.w2.rows) // w1 has one bias column!
 
   def train(X: Features, y: Labels, lambda: Double, maxIterations: Int): SimpleNetwork = {
     val f = new DiffFunction[DenseVector[Double]] {
@@ -46,6 +46,18 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
     val accuracy: Double = mean(DenseVector(probabilities:_*))
     val logloss: Double = probabilities.map(log(_)).sum * (-1D/probabilities.length)
     SimpleNetwork.TestResults(accuracy, logloss, list)
+  }
+
+  def save(file: String): Unit = {
+    SimpleNetworkIO.save(file, this)
+  }
+
+  def update(w: DenseVector[Double]) ={
+    new SimpleNetwork(thetas.update(w))
+  }
+
+  override def toString = {
+    s"input[${layers(0)}] hidden[${layers(1)}] output[${layers(2)}]"
   }
 
 }
@@ -142,8 +154,10 @@ object SimpleNetwork extends Logging {
     val random: DenseMatrix[Double] = DenseMatrix.rand[Double](output, input + 1) :* (2 * epsilon)
     random - epsilon
   }
-  
-  
+
+  def load(file: String) = {
+    SimpleNetworkIO.load(file)
+  }
 
 }
 
