@@ -18,6 +18,18 @@ class PrepareDataTest extends FunSuite with Matchers {
     data.y.cols should equal (9)
   }
 
+  test("Prune some samples") {
+    val fileName = "src/test/resources/train_sample_small.csv"
+    val loader = new DataLoader(fileName, 0.8, 0.2)
+    val ids = loader.trainData(0 to 4, 0).toScalaVector()
+    println("ids for pruning: " + ids)
+    val result = new PrepareData(loader.trainData, ids).ids.toScalaVector()
+    println("result: " + result)
+    for(id <- ids) {
+      result should not contain id
+    }
+  }
+
   test("Obtain feature normalization") {
     val dm = DenseMatrix((1.0,2.0,3.0),(1.0,2.0,3.0),(4.0,5.0,6.0))
     val mv: DenseMatrix[MeanAndVariance] = meanAndVariance(dm(::,*))

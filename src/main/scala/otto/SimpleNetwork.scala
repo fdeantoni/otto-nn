@@ -52,8 +52,12 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
 object SimpleNetwork extends Logging {
   
-  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], prediction: DenseVector[Double], probability: Double)
-  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput])
+  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], prediction: DenseVector[Double], probability: Double) {
+    override def toString = s"id[$id] probability[$probability]"
+  }
+  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput]) {
+    override def toString = s"accuracy[$accuracy] logloss[$logloss] output[${output.length}]"
+  }
 
   case class Activations(a1: DenseMatrix[Double], a2: DenseMatrix[Double], a3: DenseMatrix[Double])
 

@@ -6,9 +6,7 @@ import breeze.numerics._
 import breeze.linalg._
 import grizzled.slf4j.Logging
 
-class DataLoader(fileName: String, train: Double, test: Double, prune: Seq[Double] = Seq.empty) extends Logging {
-
-  if(train + test > 1) throw new RuntimeException("The train + test ratio cannot be more than 1!")
+class DataLoader(fileName: String, train: Double, test: Double) extends Logging {
 
   val data = csvread(file = new File(fileName), skipLines = 1)
 
@@ -16,14 +14,14 @@ class DataLoader(fileName: String, train: Double, test: Double, prune: Seq[Doubl
 
   val trainSize = round(train * data.rows).toInt
   val testSize = round(test * data.rows).toInt
-  val cvSize = if((train + test) < 1) round(data.rows - trainSize - testSize) else 0
+  val cvSize = round(data.rows - trainSize - testSize)
 
   logger.info(s"Training rows: " + trainSize)
   logger.info(s"Testing rows: " + testSize)
   logger.info(s"CV rows: " + cvSize)
 
   private val randomIndex =  DenseVector(util.Random.shuffle(0 to data.rows - 1).seq.toArray)
-  private val trainIndex = randomIndex(0 to trainSize - 1).toScalaVector().filter( id => !prune.contains(id) )
+  private val trainIndex = randomIndex(0 to trainSize - 1).toScalaVector()
   private val testIndex = randomIndex(trainSize to (trainSize + testSize - 1)).toScalaVector()
   private val cvIndex = randomIndex( (trainSize + testSize) to data.rows - 1 ).toScalaVector()
 
