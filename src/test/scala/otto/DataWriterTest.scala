@@ -6,8 +6,7 @@ import breeze.linalg.DenseVector
 import com.google.common.base.Charsets
 import com.google.common.io.Files
 import org.scalatest.{Matchers, FunSuite}
-
-import scala.util.Random
+import otto.ActualData.Prediction
 
 class DataWriterTest extends FunSuite with Matchers {
 
@@ -15,13 +14,10 @@ class DataWriterTest extends FunSuite with Matchers {
     val file = "target/test-output.csv"
     val output = for(i <- 1 to 10) yield {
       val features = DenseVector.rand[Double](4)
-      val label = DenseVector(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
-      val prediction = DenseVector.rand[Double](9)
-      val prob = Random.nextDouble()
-      SimpleNetwork.TestOutput(id = i.toDouble, features = features, label = label, prediction = prediction, probability = prob)
+      val probability = DenseVector.rand[Double](9)
+      new Prediction(i.toInt, features, probability)
     }
-    val results = SimpleNetwork.TestResults(0.1, 0.1, output)
-    val writer = new DataWriter(results)
+    val writer = new DataWriter(output)
     writer.save(file)
     val check = new File(file)
     check.exists() should equal (true)

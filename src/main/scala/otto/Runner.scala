@@ -40,15 +40,15 @@ object Runner extends Logging {
     test
   }
 
-  def filtering(iterations: Int, lambda: Double, hidden: Int = 68): SimpleNetwork.TestResults = {
-    val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
+  def filtering(iterations: Int, lambda: Double, hidden: Int = 68): (SimpleNetwork, SimpleNetwork.TestResults) = {
+    val loader: DataLoader = new DataLoader(fileName = file, train = 0.9, test = 0.1)
     var network: SimpleNetwork = SimpleNetwork(93, hidden, 9)
     println(s"Layers: ${network.layers.mkString(",")}")
     println(s"Lambda: $lambda")
     println(s"Iterations: $iterations")
-    var threshold = -1
+    var threshold = 100
     var error = Seq.empty[Double]
-    while(threshold != 0) {
+    while(threshold > 10) {
       println("------------------------------------------------------")
       val trainData = new PrepareData(loader.trainData, prune = error)
       network = network.train(trainData.X, trainData.y, lambda, iterations)
@@ -74,9 +74,19 @@ object Runner extends Logging {
     println(s" < 75% probability: ${test.output.count(sample => sample.probability < 0.75 && sample.probability > 0.5)}")
     println(s" < 99% probability: ${test.output.count(sample => sample.probability < 0.99 && sample.probability > 0.75)}")
     println(s" > 99% probability: ${test.output.count(sample => sample.probability > 0.99)}")
-    test
+    (network, test)
   }
 
+  def submit(network: SimpleNetwork): Unit = {
+    val actual = new ActualData("src/main/resources/test.csv")
+    val results = actual.classify(network)
+    val writer = new DataWriter(results)
+    writer.save("target/submit.csv")
+  }
+
+  def save(network: SimpleNetwork): Unit = {
+    network.save("target/network.json")
+  }
 
 
 

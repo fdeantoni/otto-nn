@@ -6,7 +6,7 @@ import com.google.common.io.{FileWriteMode, Files}
 
 import scala.language.reflectiveCalls
 
-class DataWriter(results: SimpleNetwork.TestResults) {
+class DataWriter(results: Seq[ActualData.Prediction]) {
 
   val header = "id,Class_1,Class_2,Class_3,Class_4,Class_5,Class_6,Class_7,Class_8,Class_9\n"
 
@@ -15,9 +15,9 @@ class DataWriter(results: SimpleNetwork.TestResults) {
     if(file.exists()) file.delete()
     val resource = Files.asByteSink(file, FileWriteMode.APPEND)
     resource.write(header.getBytes("UTF8"))
-    for(output <- results.output) {
+    for(output <- results) {
       val id = output.id.toInt
-      val prediction = output.prediction.toScalaVector().mkString(",")
+      val prediction = output.probability.toScalaVector().mkString(",")
       resource.write(s"$id,$prediction\n".getBytes("UTF8"))
     }
   }

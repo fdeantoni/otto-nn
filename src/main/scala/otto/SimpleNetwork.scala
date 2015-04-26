@@ -21,7 +21,7 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
     new SimpleNetwork(thetas.update(result))
   }
 
-  def predict(X: Features): Labels = {
+  def predict(X: Features): DenseMatrix[Double] = {
     thetas.activations(X).a3
   }
 
