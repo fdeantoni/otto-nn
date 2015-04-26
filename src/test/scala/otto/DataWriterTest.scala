@@ -13,9 +13,8 @@ class DataWriterTest extends FunSuite with Matchers {
   test("Write test output to file") {
     val file = "target/test-output.csv"
     val output = for(i <- 1 to 10) yield {
-      val features = DenseVector.rand[Double](4)
       val probability = DenseVector.rand[Double](9)
-      new Prediction(i.toInt, features, probability)
+      new Prediction(i.toInt, probability)
     }
     val writer = new DataWriter(output)
     writer.save(file)

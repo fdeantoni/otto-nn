@@ -19,14 +19,13 @@ class ActualData(fileName: String) {
     val predictions = network.predict(X)
     Seq.tabulate(predictions.rows){ i =>
       val id = ids(i)
-      val features = X(i,::).inner
       val prediction = predictions(i, ::).inner
-      ActualData.Prediction(id, features, prediction)
+      ActualData.Prediction(id, prediction)
     }
   }
 
 }
 
 object ActualData {
-  case class Prediction(id: Double, features: DenseVector[Double], probability: DenseVector[Double])
+  case class Prediction(id: Double, probability: DenseVector[Double])
 }

@@ -77,15 +77,19 @@ object Runner extends Logging {
     (network, test)
   }
 
-  def submit(network: SimpleNetwork): Unit = {
+  def submit(network: SimpleNetwork, file: String = "target/submit.csv"): Unit = {
     val actual = new ActualData("src/main/resources/test.csv")
     val results = actual.classify(network)
     val writer = new DataWriter(results)
-    writer.save("target/submit.csv")
+    writer.save(file)
   }
 
-  def save(network: SimpleNetwork): Unit = {
-    network.save("target/network.json")
+  def load(file: String): SimpleNetwork = {
+    SimpleNetwork.load(file)
+  }
+
+  def save(network: SimpleNetwork, file: String = "target/network.json"): Unit = {
+    network.save(file)
   }
 
 
