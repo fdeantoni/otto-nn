@@ -6,6 +6,10 @@ scalaVersion := "2.11.5"
 
 testOptions in Test += Tests.Argument("-oDSF")
 
+fork in run := true
+
+javaOptions in run ++= Seq("-Xms256M", "-Xmx1G")
+
 resolvers ++= Seq(
   "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
   "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"

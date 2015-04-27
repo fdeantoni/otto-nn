@@ -1,6 +1,6 @@
 package otto
 
-import breeze.linalg.{convert, DenseVector, DenseMatrix}
+import breeze.linalg._
 import grizzled.slf4j.Logging
 
 
@@ -10,17 +10,19 @@ object Runner extends Logging {
 
 
   def main (args: Array[String] = Array.empty[String]): Unit = {
-    one(100, 5)
+    //one(100, 5)
+    val network = load("target/network.json")
+    submit(network)
   }
 
   def one(iterations: Int, lambda: Double, hidden: Int = 68, prune: Seq[Double] = Seq.empty): SimpleNetwork.TestResults = {
     val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
     val trainData = new PrepareData(loader.trainData, prune = prune)
     val network = SimpleNetwork(93, hidden, 9).train(trainData.X, trainData.y, lambda, iterations)
-    val result = network.test(trainData.ids, trainData.X, trainData.y)
     println(s"Layers: ${network.layers.mkString(",")}")
     println(s"Lambda: $lambda")
     println(s"Iterations: $iterations")
+    val result = network.test(trainData.ids, trainData.X, trainData.y)
     println(s"Training accuracy: ${result.accuracy}")
     println(s"Training logloss: ${result.logloss}")
     val testData = new PrepareData(loader.testData)

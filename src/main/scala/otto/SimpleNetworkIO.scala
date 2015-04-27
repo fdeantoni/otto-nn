@@ -35,10 +35,7 @@ object SimpleNetworkIO extends Logging {
     val json = Files.readFirstLine(new File(fileName), Charsets.UTF_8)
     val io = read[SimpleNetworkIO](json)
     val network = SimpleNetwork(io.layers(0), io.layers(1), io.layers(2))
-    logger.debug(s"Network: $network")
-    logger.debug(s"Thetas:\n ${network.thetas}")
     val vector = DenseVector(io.thetas:_*)
-    logger.debug(s"Loaded thetas: \n$vector")
     network.update(vector)
   }
 
