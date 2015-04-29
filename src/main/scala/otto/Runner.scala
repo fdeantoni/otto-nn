@@ -1,13 +1,12 @@
 package otto
 
-import breeze.linalg._
 import grizzled.slf4j.Logging
 
 
 object Runner extends Logging {
 
   val file = "src/main/resources/train_clean.csv"
-
+  val outputs = 9
 
   def main (args: Array[String] = Array.empty[String]): Unit = {
     //one(100, 5)
@@ -15,10 +14,10 @@ object Runner extends Logging {
     submit(network)
   }
 
-  def one(iterations: Int, lambda: Double, hidden: Int = 68, prune: Seq[Double] = Seq.empty): SimpleNetwork.TestResults = {
+  def one(iterations: Int, lambda: Double, hidden: Int = 68, prune: Seq[Double] = Seq.empty): (SimpleNetwork, SimpleNetwork.TestResults) = {
     val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
     val trainData = new PrepareData(loader.trainData, prune = prune)
-    val network = SimpleNetwork(93, hidden, 9).train(trainData.X, trainData.y, lambda, iterations)
+    val network = SimpleNetwork(trainData.X.cols, hidden, outputs).train(trainData.X, trainData.y, lambda, iterations)
     println(s"Layers: ${network.layers.mkString(",")}")
     println(s"Lambda: $lambda")
     println(s"Iterations: $iterations")
@@ -39,12 +38,12 @@ object Runner extends Logging {
     println(s" < 75% probability: ${test.output.count(sample => sample.probability < 0.75 && sample.probability > 0.5)}")
     println(s" < 99% probability: ${test.output.count(sample => sample.probability < 0.99 && sample.probability > 0.75)}")
     println(s" > 99% probability: ${test.output.count(sample => sample.probability > 0.99)}")
-    test
+    (network, test)
   }
 
   def filtering(iterations: Int, lambda: Double, hidden: Int = 68): (SimpleNetwork, SimpleNetwork.TestResults) = {
     val loader: DataLoader = new DataLoader(fileName = file, train = 0.9, test = 0.1)
-    var network: SimpleNetwork = SimpleNetwork(93, hidden, 9)
+    var network: SimpleNetwork = SimpleNetwork(93, hidden, outputs)
     println(s"Layers: ${network.layers.mkString(",")}")
     println(s"Lambda: $lambda")
     println(s"Iterations: $iterations")
@@ -93,7 +92,5 @@ object Runner extends Logging {
   def save(network: SimpleNetwork, file: String = "target/network.json"): Unit = {
     network.save(file)
   }
-
-
 
 }
