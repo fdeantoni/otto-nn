@@ -32,6 +32,8 @@ class PrepareData(data: DenseMatrix[Double], prune: Seq[Double] = Seq.empty) ext
     DenseMatrix(vecs:_*)
   }
 
+  logger.info(s"Count of samples per classes: ${pruned(::, data.cols - 1).toScalaVector().groupBy(c => c).map(t => (t._1, t._2.length.toDouble))}")
+
 }
 
 object PrepareData {
