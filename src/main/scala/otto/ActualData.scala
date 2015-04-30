@@ -13,7 +13,7 @@ class ActualData(fileName: String) extends Logging {
 
   val X: Features = {
     val parameters: DenseMatrix[Double] = data(::, 1 to data.cols - 1)
-    PrepareData.normalize(parameters)
+    FeatureNormalize.log10(parameters)
   }
 
   def classify(network: SimpleNetwork): Seq[ActualData.Prediction] = {

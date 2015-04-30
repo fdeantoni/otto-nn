@@ -120,7 +120,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
       )
-      PrepareData.normalize(data)
+      PrepareData.normalizeLog(data)
     }
     val yt = DenseMatrix(
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
