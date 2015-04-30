@@ -1,8 +1,5 @@
 package otto
 
-import breeze.linalg._
-import breeze.numerics._
-import breeze.stats._
 import org.scalatest.{Matchers, FunSuite}
 
 class PrepareDataTest extends FunSuite with Matchers {
@@ -28,17 +25,6 @@ class PrepareDataTest extends FunSuite with Matchers {
     for(id <- ids) {
       result should not contain id
     }
-  }
-
-  test("Obtain feature normalization") {
-    val dm = DenseMatrix((1.0,2.0,3.0),(1.0,2.0,3.0),(4.0,5.0,6.0))
-    val mv: DenseMatrix[MeanAndVariance] = meanAndVariance(dm(::,*))
-    val cols = for(i <- 0 to mv.cols - 1) yield {
-      val mvi = mv(0,i)
-      dm(::,i).map( v => (v - mvi.mean) / sqrt(mvi.variance) )
-    }
-    val result = DenseMatrix(cols.map(_.data):_*).t
-    println(result)
   }
 
 }
