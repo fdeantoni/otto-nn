@@ -22,8 +22,7 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
   }
 
   def predict(X: Features): DenseMatrix[Double] = {
-    val result = thetas.activations(X).a3
-    normalize(result(*,::)) // we normalize to get the probabilities per class
+    thetas.activations(X).a3
   }
 
   def test(ids: Ids, X: Features, y: Labels): SimpleNetwork.TestResults = {
