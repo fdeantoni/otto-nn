@@ -120,7 +120,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D),
         (1D, 2D), (3D, 4D), (5D, 6D), (7D, 8D)
       )
-      PrepareData.normalizeLog(data)
+      FeatureNormalize.std(data)
     }
     val yt = DenseMatrix(
       (1D, 0D, 0D , 0D), (0D, 1D, 0D, 0D), (0D, 0D, 1D, 0D), (0D,0D,0D,1D),
@@ -150,7 +150,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     println(s"Accuracy: ${result.accuracy}")
     println(s"Logloss: ${result.logloss}")
     result.accuracy should (be > 0.95)
-    val errors = result.output.filter(sample => sample.probability < 0.8)
+    val errors = result.output.filter(sample => sample.actual < 0.8)
     println(s"Results with < 99% probability: ${errors.length}")
     println(errors.mkString("\n"))
   }
@@ -167,7 +167,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
     val test = network.test(testData.ids, testData.X, testData.y)
     println(s"Test Accuracy: ${test.accuracy}")
     println(s"Test logloss: ${test.logloss}")
-    val errors = result.output.filter(sample => sample.probability < 0.005)
+    val errors = result.output.filter(sample => sample.actual < 0.005)
     println(s"Results with < 0.5% probability: ${errors.length} / ${testData.X.rows}")
     println(errors.mkString("\n"))
   }

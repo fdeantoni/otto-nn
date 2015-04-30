@@ -26,26 +26,26 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
   }
 
   def test(ids: Ids, X: Features, y: Labels): SimpleNetwork.TestResults = {
-    val predictions = predict(X)
-    val list = Seq.tabulate(predictions.rows){ i =>
+    val raw = predict(X)
+    val list = Seq.tabulate(raw.rows){ i =>
       val id = ids(i)
       val features = X(i,::).inner
       val label = y(i,::).inner
-      val prediction = predictions(i, ::).inner
-      val probability = sum(label :* prediction)
-      SimpleNetwork.TestOutput(id, features, label, prediction, probability)
+      val probabilities = raw(i, ::).inner
+      val actual = sum(label :* probabilities)
+      SimpleNetwork.TestOutput(id, features, label, probabilities, actual)
     }
     val probabilities = for(sample <- list) yield {
-      if (sample.probability >= (1 - 1e-15))
+      if (sample.actual >= (1 - 1e-15))
         1 - 1e-15
-      else if (sample.probability < 1e-15)
+      else if (sample.actual < 1e-15)
         1e-15
-      else sample.probability
+      else sample.actual
     }
     import breeze.stats._
     val accuracy: Double = mean(DenseVector(probabilities:_*))
     val logloss: Double = probabilities.map(log(_)).sum * (-1D/probabilities.length)
-    SimpleNetwork.TestResults(accuracy, logloss, list)
+    SimpleNetwork.TestResults(accuracy, logloss, list, raw)
   }
 
   def save(file: String): Unit = {
@@ -64,10 +64,10 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
 object SimpleNetwork extends Logging {
   
-  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], prediction: DenseVector[Double], probability: Double) {
-    override def toString = s"id[$id] probability[$probability]"
+  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], probabilities: DenseVector[Double], actual: Double) {
+    override def toString = s"id[$id] actual[$actual]"
   }
-  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput]) {
+  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput], raw: DenseMatrix[Double]) {
     override def toString = s"accuracy[$accuracy] logloss[$logloss] output[${output.length}]"
   }
 
