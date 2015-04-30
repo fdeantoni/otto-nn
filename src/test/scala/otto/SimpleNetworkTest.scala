@@ -156,7 +156,7 @@ class SimpleNetworkTest extends FunSuite with Matchers {
   }
 
   test("A neural network with otto data") {
-    val fileName = "src/main/resources/train_clean.csv"
+    val fileName = "src/test/resources/train_sample.csv"
     val loader = new DataLoader(fileName, 0.8, 0.2)
     val data = new PrepareData(loader.trainData)
     val network = SimpleNetwork(93, 68, 9).train(data.X, data.y, 1.0, 100)
