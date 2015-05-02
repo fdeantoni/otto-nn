@@ -1,7 +1,7 @@
 package otto
 
 import breeze.linalg._
-import breeze.numerics._
+
 
 object FeatureNormalize {
 
@@ -10,7 +10,7 @@ object FeatureNormalize {
    * such cases, after log-transformation, the values become normally distributed
    */
   def log10(data: DenseMatrix[Double]) = {
-    log(1D:+data)
+    breeze.numerics.log10(1D:+data)
   }
 
   /**
@@ -21,7 +21,7 @@ object FeatureNormalize {
     val mv: DenseMatrix[MeanAndVariance] = meanAndVariance(data(::,*))
     val cols = for(i <- 0 to mv.cols - 1) yield {
       val mvi = mv(0,i)
-      data(::,i).map( v => (v - mvi.mean) / sqrt(mvi.variance) )
+      data(::,i).map( v => (v - mvi.mean) / breeze.numerics.sqrt(mvi.variance) )
     }
     DenseMatrix(cols.map(_.data):_*).t
   }
