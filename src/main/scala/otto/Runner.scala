@@ -13,7 +13,7 @@ object Runner extends Logging {
     submit(network)
   }
 
-  def one(iterations: Int, lambda: Double, hidden: Int = 68, prune: Seq[Double] = Seq.empty): (SimpleNetwork, SimpleNetwork.TestResults) = {
+  def one(iterations: Int = 200, lambda: Double = 2.5, hidden: Int = 200, prune: Seq[Double] = Seq.empty): (SimpleNetwork, SimpleNetwork.TestResults) = {
     val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
     val trainData = new PrepareData(loader.trainData, prune = prune)
     val network = SimpleNetwork(trainData.X.cols, hidden, outputs).train(trainData.X, trainData.y, lambda, iterations)

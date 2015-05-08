@@ -35,17 +35,10 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
       val actual = sum(label :* probabilities)
       SimpleNetwork.TestOutput(id, features, label, probabilities, actual)
     }
-    val probabilities = for(sample <- list) yield {
-      if (sample.actual >= (1 - 1e-15))
-        1 - 1e-15
-      else if (sample.actual < 1e-15)
-        1e-15
-      else sample.actual
-    }
     import breeze.stats._
-    val accuracy: Double = mean(DenseVector(probabilities:_*))
-    val logloss: Double = probabilities.map(log(_)).sum * (-1D/probabilities.length)
-    SimpleNetwork.TestResults(accuracy, logloss, list, raw)
+    val accuracy: Double = mean(DenseVector(list.map(_.actual):_*))
+    val ll: Double = logloss(raw, y)
+    SimpleNetwork.TestResults(accuracy, ll, list, raw)
   }
 
   def save(file: String): Unit = {
