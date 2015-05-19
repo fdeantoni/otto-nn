@@ -9,11 +9,12 @@ object Runner extends Logging {
   val outputs = 9
 
   def main (args: Array[String] = Array.empty[String]): Unit = {
-    val network = load("target/network.json")
+    val (network, _) = one()
+    save(network)
     submit(network)
   }
 
-  def one(iterations: Int = 200, lambda: Double = 2.5, hidden: Int = 200, prune: Seq[Double] = Seq.empty): (SimpleNetwork, SimpleNetwork.TestResults) = {
+  def one(iterations: Int = 500, lambda: Double = 0.5, hidden: Int = 300, prune: Seq[Double] = Seq.empty): (SimpleNetwork, SimpleNetwork.TestResults) = {
     val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
     val trainData = new PrepareData(loader.trainData, prune = prune)
     val network = SimpleNetwork(trainData.X.cols, hidden, outputs).train(trainData.X, trainData.y, lambda, iterations)
