@@ -28,16 +28,7 @@ object Runner extends Logging {
     val test = network.test(trainData.ids, testData.X, testData.y)
     println(s"Test Accuracy: ${test.accuracy}")
     println(s"Test logloss: ${test.logloss}")
-    println("Results:")
-    println(s" < 0.5% probability: ${test.output.count(sample => sample.actual < 0.005)}")
-    println(s" < 2.5% probability: ${test.output.count(sample => sample.actual < 0.025 && sample.actual > 0.005)}")
-    println(s" < 5% probability: ${test.output.count(sample => sample.actual < 0.05 && sample.actual > 0.025)}")
-    println(s" < 10% probability: ${test.output.count(sample => sample.actual < 0.1 && sample.actual > 0.05)}")
-    println(s" < 25% probability: ${test.output.count(sample => sample.actual < 0.25 && sample.actual > 0.1)}")
-    println(s" < 50% probability: ${test.output.count(sample => sample.actual < 0.5 && sample.actual > 0.25)}")
-    println(s" < 75% probability: ${test.output.count(sample => sample.actual < 0.75 && sample.actual > 0.5)}")
-    println(s" < 99% probability: ${test.output.count(sample => sample.actual < 0.99 && sample.actual > 0.75)}")
-    println(s" > 99% probability: ${test.output.count(sample => sample.actual > 0.99)}")
+    println(s"${test.confusion}")
     (network, test)
   }
 

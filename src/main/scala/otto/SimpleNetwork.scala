@@ -32,13 +32,14 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
       val features = X(i,::).inner
       val label = y(i,::).inner
       val probabilities = raw(i, ::).inner
-      val actual = sum(label :* probabilities)
-      SimpleNetwork.TestOutput(id, features, label, probabilities, actual)
+      val labelProbability = sum(label :* probabilities)
+      val prediction = argmax(probabilities) + 1
+      SimpleNetwork.TestOutput(id, features, argmax(label) + 1, probabilities, labelProbability, prediction)
     }
     import breeze.stats._
-    val accuracy: Double = mean(DenseVector(list.map(_.actual):_*))
+    val accuracy: Double = mean(DenseVector(list.map(_.labelProbability):_*))
     val ll: Double = logloss(raw, y)
-    SimpleNetwork.TestResults(accuracy, ll, list, raw)
+    SimpleNetwork.TestResults(accuracy, ll, list, raw, list.map(_.label).distinct)
   }
 
   def save(file: String): Unit = {
@@ -57,11 +58,25 @@ class SimpleNetwork(val thetas: SimpleNetwork.Thetas) extends Logging {
 
 object SimpleNetwork extends Logging {
   
-  case class TestOutput(id: Double, features: DenseVector[Double], label: DenseVector[Double], probabilities: DenseVector[Double], actual: Double) {
-    override def toString = s"id[$id] actual[$actual]"
+  case class TestOutput(id: Double, features: DenseVector[Double], label: Double, probabilities: DenseVector[Double], labelProbability: Double, prediction: Double) {
+    override def toString = s"id[$id] probability[$labelProbability]"
   }
-  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput], raw: DenseMatrix[Double]) {
+  case class TestResults(accuracy: Double, logloss: Double, output: Seq[TestOutput], raw: DenseMatrix[Double], labels: Seq[Double]) {
+    val confusion = new ConfusionMatrix(this)
     override def toString = s"accuracy[$accuracy] logloss[$logloss] output[${output.length}]"
+  }
+
+  class ConfusionMatrix(results: TestResults) {
+    val l = results.labels.map(_.toInt).sorted
+    var table = Seq( Seq("Labels") ++ l)
+    for(label <- l) {
+      var column: Seq[Int] = Seq(label.toInt)
+      for(observed <- l) {
+        column = column :+ results.output.count { sample => sample.label == label && sample.prediction == observed }
+      }
+      table = table :+ column
+    }
+    override def toString = "Confusion: Observed (columns) vs. Actual (rows)\n" + Tabulator.format(table)
   }
 
   case class Activations(a1: DenseMatrix[Double], a2: DenseMatrix[Double], a3: DenseMatrix[Double])
