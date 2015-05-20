@@ -25,14 +25,29 @@ object Runner extends Logging {
     println(s"Training accuracy: ${result.accuracy}")
     println(s"Training logloss: ${result.logloss}")
     val testData = new PrepareData(loader.testData)
-    val test = network.test(trainData.ids, testData.X, testData.y)
+    val test = network.test(testData.ids, testData.X, testData.y)
     println(s"Test Accuracy: ${test.accuracy}")
     println(s"Test logloss: ${test.logloss}")
     println(s"${test.confusion}")
     (network, test)
   }
 
-  def submit(network: SimpleNetwork, file: String = "target/submit.csv"): Unit = {
+  def stacked(stackOne: SimpleNetwork, iterations: Int = 500, hidden: Int = 300, lambda: Double = 0.0): (SimpleNetwork, SimpleNetwork.TestResults) = {
+    val loader: DataLoader = new DataLoader(fileName = file, train = 0.8, test = 0.2)
+    val trainData = new PrepareData(loader.trainData)
+    val features = stackOne.predict(trainData.X)
+    val stackTwo = SimpleNetwork(features.cols, hidden, outputs).train(features, trainData.y, lambda, iterations)
+    val testData = new PrepareData(loader.testData)
+    val testFeatures = stackOne.predict(testData.X)
+    val test = stackTwo.test(testData.ids, testFeatures, testData.y)
+    println(s"Test Accuracy: ${test.accuracy}")
+    println(s"Test logloss: ${test.logloss}")
+    println(s"${test.confusion}")
+    (stackTwo, test)
+  }
+
+  def submit(network: SimpleNetwork*): Unit = {
+    val file: String = "target/submit.csv"
     val actual = new ActualData("src/main/resources/test.csv")
     val results = actual.classify(network)
     val writer = new DataWriter(results)

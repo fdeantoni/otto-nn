@@ -16,9 +16,12 @@ class ActualData(fileName: String) extends Logging {
     FeatureNormalize.log10(parameters)
   }
 
-  def classify(network: SimpleNetwork): Seq[ActualData.Prediction] = {
-    val predictions = network.predict(X)
-    logger.debug(s"Predictions made: ${predictions.rows}")
+  def classify(networks: Seq[SimpleNetwork]): Seq[ActualData.Prediction] = {
+    assert(networks.length > 0, "Number of networks must be at least 1!")
+    var predictions: DenseMatrix[Double] = networks.head.predict(X)
+    for(network <- networks.drop(1)) {
+      predictions = network.predict(predictions)
+    }
     Seq.tabulate(predictions.rows){ i =>
       val id = ids(i)
       val prediction = predictions(i, ::).inner
